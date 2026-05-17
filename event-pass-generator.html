@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Pass Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --primary-hover: #357abd;
+            --bg-gradient: linear-gradient(135deg, #f6f8fd 0%, #f1f5f9 100%);
+            --text-main: #333;
+            --text-muted: #64748b;
+            --gold: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            perspective: 1000px;
+        }
+
+        /* --- Form Card Styles --- */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.5s ease;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        input[type="file"] {
+            padding: 9px;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(74, 144, 226, 0.2);
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        /* --- Ticket Styles --- */
+        #ticket-section {
+            display: none;
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .ticket {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Dashed Cutout Effect */
+        .ticket::before, .ticket::after {
+            content: '';
+            position: absolute;
+            top: 55%;
+            width: 40px;
+            height: 40px;
+            background: #f1f5f9; /* Matches body bg */
+            border-radius: 50%;
+            z-index: 10;
+        }
+
+        .ticket::before { left: -20px; box-shadow: inset -3px 0 5px rgba(0,0,0,0.02); }
+        .ticket::after { right: -20px; box-shadow: inset 3px 0 5px rgba(0,0,0,0.02); }
+
+        .ticket-header {
+            padding: 30px 40px;
+            background: #fff;
+            border-bottom: 2px dashed #e2e8f0;
+            text-align: center;
+            position: relative;
+        }
+
+        .admits-one {
+            position: absolute;
+            top: 20px;
+            right: -35px;
+            background: var(--gold);
+            color: #000;
+            padding: 5px 40px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transform: rotate(45deg);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .ticket-logo-container {
+            margin-bottom: 15px;
+            display: none; /* Hidden if no image */
+        }
+        
+        .ticket-logo {
+            max-height: 80px;
+            border-radius: 10px;
+            object-fit: contain;
+        }
+
+        .ticket-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .ticket-meta {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .ticket-body {
+            padding: 40px;
+            background: #fafbfc;
+        }
+
+        .attendee-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-block {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .ticket-footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: var(--text-muted);
+            border: 2px solid #e2e8f0;
+            box-shadow: none;
+        }
+        
+        .btn-secondary:hover {
+            background: #f8fafc;
+            color: var(--text-main);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 500px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .attendee-info { grid-template-columns: 1fr; }
+            .ticket-header { padding: 30px 20px; }
+            .ticket-body { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- Registration Form Section -->
+        <div id="form-section" class="card">
+            <div class="header">
+                <h1>✨ Event Pass Generator</h1>
+                <p>Enter details below to generate a luxury event pass</p>
+            </div>
+
+            <form id="eventForm">
+                <div class="form-grid">
+                    <!-- Event Details -->
+                    <div class="form-group full-width">
+                        <label>🎭 Program Title</label>
+                        <input type="text" id="title" placeholder="e.g. Grand Tech Symposium 2026" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>⏰ Date & Time</label>
+                        <input type="datetime-local" id="time" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📍 Venue</label>
+                        <input type="text" id="venue" placeholder="e.g. Convention Center, Hall A" required>
+                    </div>
+
+                    <!-- Attendee Details -->
+                    <div class="form-group full-width" style="margin-top: 10px;">
+                        <label style="border-bottom: 1px solid #eee; padding-bottom: 5px;">👤 Attendee Information</label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" id="name" placeholder="John Doe" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📱 Phone</label>
+                        <input type="tel" id="phone" placeholder="+1 234 567 890" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📧 Email ID</label>
+                        <input type="email" id="email" placeholder="john@example.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🆔 FOLK-ID</label>
+                        <input type="text" id="folkId" placeholder="FLK-99821" required>
+                    </div>
+
+                    <!-- Optional Logo -->
+                    <div class="form-group full-width">
+                        <label>🖼️ Event Logo / Flyer (Optional)</label>
+                        <input type="file" id="logo" accept="image/*">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn">🎟️ Generate Pass</button>
+            </form>
+        </div>
+
+        <!-- Ticket Display Section -->
+        <div id="ticket-section">
+            <div class="ticket">
+                <div class="admits-one">Admits One</div>
+                
+                <div class="ticket-header">
+                    <div class="ticket-logo-container" id="display-logo-container">
+                        <img src="" alt="Event Logo" class="ticket-logo" id="display-logo">
+                    </div>
+                    <div class="ticket-title" id="display-title">Program Title</div>
+                    <div class="ticket-meta">
+                        <span>🗓️ <span id="display-time">Date & Time</span></span>
+                        <span>📍 <span id="display-venue">Venue Location</span></span>
+                    </div>
+                </div>
+
+                <div class="ticket-body">
+                    <div class="attendee-info">
+                        <div class="info-block">
+                            <span class="info-label">Attendee Name</span>
+                            <span class="info-value">👤 <span id="display-name">Name</span></span>
+                        </div>
+                        <div class="info-block">
+                            <span class="info-label">FOLK-ID</span>
+                            <span class="info-value">🆔 <span id="display-folkId">ID</span></span>
+                        </div>
+                        <div class="info-block">
+                            <span class="info-label">Contact</span>
+                            <span class="info-value">📱 <span id="display-phone">Phone</span></span>
+                        </div>
+                        <div class="info-block">
+                            <span class="info-label">Email</span>
+                            <span class="info-value">📧 <span id="display-email">Email</span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="ticket-footer">
+                        <p style="font-size: 24px; letter-spacing: 5px;">🎫 🥂 🎟️</p>
+                        <p style="font-size: 11px; color: #94a3b8; margin-top: 10px;">Please present this pass at the entrance.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="resetForm()" class="btn btn-secondary">⬅️ Create Another Pass</button>
+        </div>
+
+    </div>
+
+    <script>
+        document.getElementById('eventForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // 1. Get Values
+            const title = document.getElementById('title').value;
+            
+            // Format the date to look nicer
+            const rawTime = document.getElementById('time').value;
+            const dateObj = new Date(rawTime);
+            const formattedTime = dateObj.toLocaleString('en-US', { 
+                weekday: 'short', month: 'short', day: 'numeric', 
+                hour: '2-digit', minute: '2-digit' 
+            });
+
+            const venue = document.getElementById('venue').value;
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const email = document.getElementById('email').value;
+            const folkId = document.getElementById('folkId').value;
+            const logoInput = document.getElementById('logo');
+
+            // 2. Set Values in Ticket
+            document.getElementById('display-title').textContent = title;
+            document.getElementById('display-time').textContent = formattedTime;
+            document.getElementById('display-venue').textContent = venue;
+            document.getElementById('display-name').textContent = name;
+            document.getElementById('display-phone').textContent = phone;
+            document.getElementById('display-email').textContent = email;
+            document.getElementById('display-folkId').textContent = folkId;
+
+            // 3. Handle Optional Logo
+            const logoContainer = document.getElementById('display-logo-container');
+            const displayLogo = document.getElementById('display-logo');
+            
+            if (logoInput.files && logoInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    displayLogo.src = e.target.result;
+                    logoContainer.style.display = 'block';
+                }
+                reader.readAsDataURL(logoInput.files[0]);
+            } else {
+                logoContainer.style.display = 'none';
+                displayLogo.src = '';
+            }
+
+            // 4. Switch Views
+            document.getElementById('form-section').style.display = 'none';
+            document.getElementById('ticket-section').style.display = 'block';
+        });
+
+        function resetForm() {
+            document.getElementById('eventForm').reset();
+            document.getElementById('ticket-section').style.display = 'none';
+            document.getElementById('form-section').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
