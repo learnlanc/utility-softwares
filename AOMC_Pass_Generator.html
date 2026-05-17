@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Art Of Mind Control - Event Registration</title>
+    <!-- Tailwind CSS for modern, fast styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for sleek tech/mindfulness typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Syncopate:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
+        }
+        .heading-font {
+            font-family: 'Syncopate', sans-serif;
+        }
+        /* Custom neon glow effects */
+        .glow-effect {
+            box-shadow: 0 0 20px rgba(129, 140, 248, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 text-slate-100 antialiased overflow-x-hidden">
+
+    <!-- Main Container -->
+    <div class="w-full max-w-md bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 glow-effect transition-all duration-500 transform hover:scale-[1.01]">
+        
+        <!-- Header Section -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-600/20 text-indigo-400 rounded-2xl mb-4 border border-indigo-500/30 text-3xl animate-pulse">
+                👁️‍🗨️
+            </div>
+            <h1 class="heading-font text-xl tracking-widest text-indigo-400 uppercase font-bold mb-2">Art Of Mind Control 🧘🧘‍♂️</h1>
+            <p class="text-xs text-slate-400 uppercase tracking-wider">Exclusive Masterclass Registration</p>
+        </div>
+
+        <!-- Registration Form -->
+        <form id="registrationForm" onsubmit="handleSignUp(event)" class="space-y-5">
+            <!-- Name Input -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2" for="name">Full Name</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500">👤</span>
+                    <input type="text" id="name" required placeholder="John Doe" 
+                        class="w-full pl-11 pr-4 py-3.5 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-slate-200 placeholder-slate-600 text-sm">
+                </div>
+            </div>
+
+            <!-- Phone Input -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2" for="phone">Phone Number</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500">📱</span>
+                    <input type="tel" id="phone" required pattern="[0-9]{10}" placeholder="9876543210" 
+                        class="w-full pl-11 pr-4 py-3.5 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-slate-200 placeholder-slate-600 text-sm">
+                </div>
+            </div>
+
+            <!-- Email Input -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2" for="email">Email ID</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500">✉️</span>
+                    <input type="email" id="email" required placeholder="john@example.com" 
+                        class="w-full pl-11 pr-4 py-3.5 bg-slate-950/60 border border-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-slate-200 placeholder-slate-600 text-sm">
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" 
+                class="w-full mt-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold py-4 rounded-xl transition-all duration-300 transform active:scale-95 shadow-lg shadow-indigo-600/30 tracking-wide text-sm flex items-center justify-center gap-2">
+                Secure My Spot ⚡
+            </button>
+        </form>
+    </div>
+
+    <!-- Success Confirmation Modal Popup -->
+    <div id="successModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-4 z-50">
+        <div class="w-full max-w-sm transform scale-95 opacity-0 transition-all duration-500 ease-out" id="modalCard">
+            
+            <!-- Pass Card / Graphic Container -->
+            <div class="bg-gradient-to-b from-indigo-950 to-slate-900 border border-indigo-500/40 rounded-2xl overflow-hidden shadow-2xl relative">
+                
+                <!-- Event Title Header at the Very Top -->
+                <div class="bg-indigo-950/80 border-b border-indigo-500/20 px-6 py-4 text-center">
+                    <span class="block text-[9px] font-bold text-indigo-400 uppercase tracking-widest mb-1">OFFICIAL ACCESS PASS</span>
+                    <h2 class="heading-font text-xs tracking-wider text-slate-100 font-bold uppercase leading-relaxed">
+                        <span class="text-indigo-400 font-sans font-semibold tracking-normal normal-case block text-[11px] mb-0.5">Program :</span>
+                        Art Of Mind Control 🧘🧘‍♂️
+                    </h2>
+                </div>
+
+                <!-- Confirmation Sub-Header -->
+                <div class="p-6 text-center border-b border-dashed border-slate-700/60 pb-5">
+                    <div class="inline-flex items-center justify-center w-11 h-11 bg-emerald-500/20 text-emerald-400 rounded-full mb-3 text-xl">
+                        ✓
+                    </div>
+                    <h3 class="text-lg font-bold text-emerald-400 tracking-wide mb-0.5">Registration Confirmed !</h3>
+                    <p class="text-xs text-slate-400">Your presentation details are generated below</p>
+                </div>
+
+                <!-- Ticket Pass Icon / Graphic Badge -->
+                <div class="px-6 py-3 bg-indigo-950/40 flex flex-col items-center justify-center text-center border-b border-dashed border-slate-700/60 relative">
+                    <!-- Left/Right Ticket Notch Cuts -->
+                    <div class="w-6 h-6 bg-slate-950 rounded-full absolute -left-3 top-[-12px] border-r border-indigo-500/40"></div>
+                    <div class="w-6 h-6 bg-slate-950 rounded-full absolute -right-3 top-[-12px] border-l border-indigo-500/40"></div>
+                    
+                    <!-- Pass Icon Design (Updated to Single Ticket) -->
+                    <div class="w-full max-w-[220px] bg-slate-950/80 border border-amber-500/30 px-4 py-3 rounded-xl flex items-center justify-between my-2 shadow-inner">
+                        <div class="text-left">
+                            <span class="block text-[9px] font-bold text-amber-500/80 tracking-widest uppercase">E-PASS</span>
+                            <span class="text-xs font-semibold text-slate-300">ADMIT ONE</span>
+                        </div>
+                        <div class="text-2xl filter drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]">🎫</div>
+                    </div>
+                </div>
+
+                <!-- Ticket Content: Event Details & Attendee Data -->
+                <div class="p-6 space-y-5">
+                    
+                    <!-- Event Details -->
+                    <div class="grid grid-cols-2 gap-4 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
+                        <div>
+                            <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">📍 Venue</span>
+                            <span class="text-xs font-medium text-slate-200 block leading-tight">Multi Vision Theater, Rajajinagar Bangalore</span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">🕒 Time</span>
+                            <span class="text-xs font-medium text-slate-200 block">1 PM IST</span>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Attendee Details -->
+                    <div class="space-y-3 pt-1">
+                        <h4 class="text-[11px] font-bold text-indigo-400 uppercase tracking-widest border-b border-slate-800 pb-1">Attendee Details</h4>
+                        
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-500">Name:</span>
+                            <span id="displayName" class="font-semibold text-slate-200">--</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-500">Phone:</span>
+                            <span id="displayPhone" class="font-mono text-slate-300">--</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-500">Email:</span>
+                            <span id="displayEmail" class="text-slate-300 truncate max-w-[180px]">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Close / Finish Button -->
+                <div class="p-4 bg-slate-950/40 border-t border-slate-800/60 text-center">
+                    <button onclick="closeModal()" class="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-widest px-4 py-2">
+                        Done
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Form Handling & DOM Manipulation JavaScript -->
+    <script>
+        function handleSignUp(event) {
+            // Prevent page refresh on form submission
+            event.preventDefault(); 
+
+            // Grab raw values input by the user
+            const inputName = document.getElementById('name').value;
+            const inputPhone = document.getElementById('phone').value;
+            const inputEmail = document.getElementById('email').value;
+
+            // Inject those values into the Success Pass DOM elements
+            document.getElementById('displayName').innerText = inputName;
+            document.getElementById('displayPhone').innerText = "+91 " + inputPhone;
+            document.getElementById('displayEmail').innerText = inputEmail;
+
+            // Get Modal DOM Elements
+            const modal = document.getElementById('successModal');
+            const card = document.getElementById('modalCard');
+
+            // Show the modal backdrop
+            modal.classList.remove('hidden');
+            
+            // Trigger smooth animation scaling
+            setTimeout(() => {
+                card.classList.remove('scale-95', 'opacity-0');
+                card.classList.add('scale-100', 'opacity-100');
+            }, 50);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('successModal');
+            const card = document.getElementById('modalCard');
+
+            // Smooth fade out
+            card.classList.remove('scale-100', 'opacity-100');
+            card.classList.add('scale-95', 'opacity-0');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                // Clear form inputs after closing
+                document.getElementById('registrationForm').reset();
+            }, 300);
+        }
+    </script>
+</body>
+</html>
