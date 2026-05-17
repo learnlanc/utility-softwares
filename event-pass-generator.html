@@ -4,11 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Event Pass Generator</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- html2canvas library loaded via CDN to convert HTML to Image -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <style>
         :root {
             --primary: #4a90e2;
             --primary-hover: #357abd;
+            --success: #2ecc71;
+            --success-hover: #27ae60;
             --bg-gradient: linear-gradient(135deg, #f6f8fd 0%, #f1f5f9 100%);
             --text-main: #333;
             --text-muted: #64748b;
@@ -28,8 +33,8 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
-            padding: 20px;
+            align-items: flex-start; /* Google Sites friendly placement */
+            padding: 40px 20px;
         }
 
         .container {
@@ -136,24 +141,32 @@
             animation: fadeIn 0.6s ease-out forwards;
         }
 
+        .ticket-capture-wrapper {
+            padding: 10px;
+            background: transparent;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
         .ticket {
-            background: #fff;
+            background: #ffffff;
             border-radius: 20px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.1);
             position: relative;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            width: 100%;
         }
 
         /* Dashed Cutout Effect */
         .ticket::before, .ticket::after {
             content: '';
             position: absolute;
-            top: 55%;
+            top: 52%;
             width: 40px;
             height: 40px;
-            background: #f1f5f9; /* Matches body bg */
+            background: #f1f5f9;
             border-radius: 50%;
             z-index: 10;
         }
@@ -162,8 +175,8 @@
         .ticket::after { right: -20px; box-shadow: inset 3px 0 5px rgba(0,0,0,0.02); }
 
         .ticket-header {
-            padding: 30px 40px;
-            background: #fff;
+            padding: 40px 40px 25px 40px;
+            background: #ffffff;
             border-bottom: 2px dashed #e2e8f0;
             text-align: center;
             position: relative;
@@ -171,7 +184,7 @@
 
         .admits-one {
             position: absolute;
-            top: 20px;
+            top: 22px;
             right: -35px;
             background: var(--gold);
             color: #000;
@@ -186,20 +199,40 @@
 
         .ticket-logo-container {
             margin-bottom: 15px;
-            display: none; /* Hidden if no image */
+            display: none;
         }
         
         .ticket-logo {
-            max-height: 80px;
+            max-height: 70px;
             border-radius: 10px;
             object-fit: contain;
         }
 
+        /* Fixed Title Container to guarantee single line layouts */
+        .ticket-title-container {
+            font-size: 24px;
+            font-weight: 800;
+            line-height: 1.3;
+            margin-bottom: 12px;
+            padding: 0 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* Solid Color fix to resolve html2canvas black box bug */
         .ticket-title {
-            font-size: 28px;
-            font-weight: 700;
             color: #1e293b;
-            margin-bottom: 10px;
+        }
+
+        .title-emoji {
+            display: inline-block;
+            font-size: 22px;
+            flex-shrink: 0;
         }
 
         .ticket-meta {
@@ -209,24 +242,72 @@
             color: var(--text-muted);
             font-size: 14px;
             font-weight: 500;
+            margin-top: 5px;
         }
 
-        .ticket-body {
-            padding: 40px;
+        /* Big Middle Ticket Graphic with ADMITS ONE Stamp */
+        .ticket-middle-graphic {
+            text-align: center;
+            padding: 25px 0 15px 0;
             background: #fafbfc;
         }
 
+        .big-pass-badge {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: floatAnimation 3s ease-in-out infinite;
+        }
+
+        .badge-icon {
+            font-size: 76px;
+            line-height: 1;
+            filter: drop-shadow(0 10px 15px rgba(79, 70, 229, 0.25));
+        }
+
+        .badge-text {
+            margin-top: 10px;
+            font-size: 11px;
+            font-weight: 800;
+            color: #1e293b;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            border: 2px dashed #cbd5e1;
+            padding: 4px 14px;
+            border-radius: 6px;
+            background: #ffffff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        @keyframes floatAnimation {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(2deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        .ticket-body {
+            padding: 15px 40px 40px 40px;
+            background: #fafbfc;
+        }
+
+        /* FIXED: Changed to a solid, explicit 2-column grid layout utilizing the full right side */
         .attendee-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 24px;
             margin-bottom: 30px;
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid #f1f5f9;
         }
 
         .info-block {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 5px;
+            min-width: 0; /* Prevents text overflow */
         }
 
         .info-label {
@@ -234,12 +315,16 @@
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 1px;
+            font-weight: 500;
         }
 
         .info-value {
             font-size: 15px;
             font-weight: 600;
             color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .ticket-footer {
@@ -248,16 +333,54 @@
             border-top: 1px solid #e2e8f0;
         }
 
-        .btn-secondary {
-            background: #fff;
-            color: var(--text-muted);
+        /* --- Action Button Layout --- */
+        .action-button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .share-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn-share {
+            background: var(--success);
+            box-shadow: 0 6px 15px rgba(46, 204, 113, 0.2);
+            margin-top: 0;
+        }
+
+        .btn-share:hover {
+            background: var(--success-hover);
+        }
+
+        .btn-download {
+            background: #ffffff;
+            color: #333;
             border: 2px solid #e2e8f0;
             box-shadow: none;
+            margin-top: 0;
+        }
+
+        .btn-download:hover {
+            background: #f8fafc;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            box-shadow: none;
+            margin-top: 5px;
+            text-decoration: underline;
         }
         
         .btn-secondary:hover {
-            background: #f8fafc;
             color: var(--text-main);
+            background: transparent;
         }
 
         @keyframes fadeIn {
@@ -265,12 +388,14 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Responsive adjustments */
         @media (max-width: 500px) {
             .form-grid { grid-template-columns: 1fr; }
-            .attendee-info { grid-template-columns: 1fr; }
-            .ticket-header { padding: 30px 20px; }
-            .ticket-body { padding: 30px 20px; }
+            .ticket-header { padding: 30px 20px 20px 20px; }
+            .ticket-body { padding: 20px 20px 30px 20px; }
+            .ticket-title-container { font-size: 18px; }
+            /* Keep columns organized neatly on small devices */
+            .attendee-info { gap: 16px; padding: 16px; }
+            .info-value { font-size: 13px; }
         }
     </style>
 </head>
@@ -289,8 +414,8 @@
                 <div class="form-grid">
                     <!-- Event Details -->
                     <div class="form-group full-width">
-                        <label>🎭 Program Title</label>
-                        <input type="text" id="title" placeholder="e.g. Grand Tech Symposium 2026" required>
+                        <label>🎤 Program Title</label>
+                        <input type="text" id="title" placeholder="e.g. National Seminar on AI Innovation" required>
                     </div>
                     
                     <div class="form-group">
@@ -300,7 +425,7 @@
 
                     <div class="form-group">
                         <label>📍 Venue</label>
-                        <input type="text" id="venue" placeholder="e.g. Convention Center, Hall A" required>
+                        <input type="text" id="venue" placeholder="e.g. Auditorium Hall C" required>
                     </div>
 
                     <!-- Attendee Details -->
@@ -341,48 +466,72 @@
 
         <!-- Ticket Display Section -->
         <div id="ticket-section">
-            <div class="ticket">
-                <div class="admits-one">Admits One</div>
-                
-                <div class="ticket-header">
-                    <div class="ticket-logo-container" id="display-logo-container">
-                        <img src="" alt="Event Logo" class="ticket-logo" id="display-logo">
-                    </div>
-                    <div class="ticket-title" id="display-title">Program Title</div>
-                    <div class="ticket-meta">
-                        <span>🗓️ <span id="display-time">Date & Time</span></span>
-                        <span>📍 <span id="display-venue">Venue Location</span></span>
-                    </div>
-                </div>
-
-                <div class="ticket-body">
-                    <div class="attendee-info">
-                        <div class="info-block">
-                            <span class="info-label">Attendee Name</span>
-                            <span class="info-value">👤 <span id="display-name">Name</span></span>
-                        </div>
-                        <div class="info-block">
-                            <span class="info-label">FOLK-ID</span>
-                            <span class="info-value">🆔 <span id="display-folkId">ID</span></span>
-                        </div>
-                        <div class="info-block">
-                            <span class="info-label">Contact</span>
-                            <span class="info-value">📱 <span id="display-phone">Phone</span></span>
-                        </div>
-                        <div class="info-block">
-                            <span class="info-label">Email</span>
-                            <span class="info-value">📧 <span id="display-email">Email</span></span>
-                        </div>
-                    </div>
+            
+            <div class="ticket-capture-wrapper" id="capture-area">
+                <div class="ticket">
+                    <div class="admits-one">Admits One</div>
                     
-                    <div class="ticket-footer">
-                        <p style="font-size: 24px; letter-spacing: 5px;">🎫 🥂 🎟️</p>
-                        <p style="font-size: 11px; color: #94a3b8; margin-top: 10px;">Please present this pass at the entrance.</p>
+                    <div class="ticket-header">
+                        <div class="ticket-logo-container" id="display-logo-container">
+                            <img src="" alt="Event Logo" class="ticket-logo" id="display-logo">
+                        </div>
+                        <div class="ticket-title-container">
+                            <span class="title-emoji">✨</span>
+                            <span class="ticket-title" id="display-title">Program Title</span>
+                            <span class="title-emoji">🎤</span>
+                        </div>
+                        <div class="ticket-meta">
+                            <span>🗓️ <span id="display-time">Date & Time</span></span>
+                            <span>📍 <span id="display-venue">Venue Location</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Big Middle Ticket Graphic with Text Integration -->
+                    <div class="ticket-middle-graphic">
+                        <div class="big-pass-badge">
+                            <span class="badge-icon">🎟️</span>
+                            <div class="badge-text">Admits One</div>
+                        </div>
+                    </div>
+
+                    <div class="ticket-body">
+                        <!-- FIXED Layout: Clean horizontally paired grid system utilizing space -->
+                        <div class="attendee-info">
+                            <div class="info-block">
+                                <span class="info-label">Attendee Name</span>
+                                <span class="info-value">👤 <span id="display-name">Name</span></span>
+                            </div>
+                            <div class="info-block">
+                                <span class="info-label">FOLK-ID</span>
+                                <span class="info-value">🆔 <span id="display-folkId">ID</span></span>
+                            </div>
+                            <div class="info-block">
+                                <span class="info-label">Contact</span>
+                                <span class="info-value">📱 <span id="display-phone">Phone</span></span>
+                            </div>
+                            <div class="info-block">
+                                <span class="info-label">Email</span>
+                                <span class="info-value">📧 <span id="display-email">Email</span></span>
+                            </div>
+                        </div>
+                        
+                        <div class="ticket-footer">
+                            <p style="font-size: 26px; letter-spacing: 12px;">🎟️ 🪪 🎫</p>
+                            <p style="font-size: 11px; color: #94a3b8; margin-top: 12px; letter-spacing: 0.5px;">Please present this pass at the entrance.</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <button onclick="resetForm()" class="btn btn-secondary">⬅️ Create Another Pass</button>
+            <!-- Action Buttons -->
+            <div class="action-button-container">
+                <div class="share-row">
+                    <button onclick="shareAsImage()" class="btn btn-share">📲 Share Details</button>
+                    <button onclick="downloadAsImage()" class="btn btn-download">💾 Download Pass</button>
+                </div>
+                <button onclick="resetForm()" class="btn btn-secondary">⬅️ Create Another Pass</button>
+            </div>
+            
         </div>
 
     </div>
@@ -394,7 +543,6 @@
             // 1. Get Values
             const title = document.getElementById('title').value;
             
-            // Format the date to look nicer
             const rawTime = document.getElementById('time').value;
             const dateObj = new Date(rawTime);
             const formattedTime = dateObj.toLocaleString('en-US', { 
@@ -438,6 +586,84 @@
             document.getElementById('form-section').style.display = 'none';
             document.getElementById('ticket-section').style.display = 'block';
         });
+
+        // Generates the canvas with forced desktop width constraints for perfect side-by-side spacing on save
+        async function generateCanvasBlob() {
+            const target = document.getElementById('capture-area');
+            
+            // Explicitly set width to 550px to enforce spacious horizontal row layout on download
+            const originalWidthStyle = target.style.width;
+            target.style.width = '550px';
+            
+            const canvas = await html2canvas(target, {
+                scale: 2.5, 
+                backgroundColor: null,
+                useCORS: true
+            });
+            
+            target.style.width = originalWidthStyle;
+            return canvas;
+        }
+
+        // Action 1: Shares clear details to WhatsApp, referencing the downloaded gallery file
+        async function shareAsImage() {
+            const title = document.getElementById('display-title').textContent;
+            const name = document.getElementById('display-name').textContent;
+            const folkId = document.getElementById('display-folkId').textContent;
+            const venue = document.getElementById('display-venue').textContent;
+            const time = document.getElementById('display-time').textContent;
+
+            // FIXED: Cleaned text template to perfectly match real-world sharing actions
+            const whatsappText = `🎟️ *CONFIRMED ENTRY PASS*\n\n📌 *Program:* ${title}\n👤 *Attendee:* ${name}\n🆔 *FOLK-ID:* ${folkId}\n🗓️ *Date:* ${time}\n📍 *Venue:* ${venue}\n\n👉 _Your formal entry ticket graphic has been successfully saved directly to your device downloads folder. Please attach it alongside this message!_`;
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappText)}`;
+
+            try {
+                const canvas = await generateCanvasBlob();
+                canvas.toBlob(async (blob) => {
+                    if (!blob) {
+                        window.open(whatsappUrl, '_blank');
+                        return;
+                    }
+                    const file = new File([blob], 'event-pass.png', { type: 'image/png' });
+                    
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'My Event Entry Pass',
+                            text: `Pass for ${title}`
+                        });
+                    } else {
+                        window.open(whatsappUrl, '_blank');
+                    }
+                }, 'image/png');
+            } catch (err) {
+                window.open(whatsappUrl, '_blank');
+            }
+        }
+
+        // Action 2: Premium Image Downloader 
+        async function downloadAsImage() {
+            try {
+                const canvas = await generateCanvasBlob();
+                const imageURL = canvas.toDataURL('image/png');
+                
+                const rawTitle = document.getElementById('display-title').textContent || 'Event';
+                const attendeeName = document.getElementById('display-name').textContent || 'Attendee';
+                const attendeePhone = document.getElementById('display-phone').textContent || 'Phone';
+
+                const cleanTitle = rawTitle.replace(/[^a-zA-Z0-9]/g, '_').replace(/__+/g, '_');
+                const cleanName = attendeeName.replace(/[^a-zA-Z0-9]/g, '_').replace(/__+/g, '_');
+                const cleanPhone = attendeePhone.replace(/[^a-zA-Z0-9+]/g, '');
+
+                const link = document.createElement('a');
+                link.download = `${cleanTitle}_${cleanName}_${cleanPhone}.png`;
+                link.href = imageURL;
+                link.click();
+            } catch (err) {
+                console.error("Error downloading pass:", err);
+                alert("Failed to render and download image structure.");
+            }
+        }
 
         function resetForm() {
             document.getElementById('eventForm').reset();
