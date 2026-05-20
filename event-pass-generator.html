@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Event Pass Generator</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- html2canvas library loaded via CDN to convert HTML to Image -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
@@ -403,7 +402,6 @@
 
     <div class="container">
         
-        <!-- Registration Form Section -->
         <div id="form-section" class="card">
             <div class="header">
                 <h1>✨ Event Pass Generator</h1>
@@ -412,7 +410,6 @@
 
             <form id="eventForm">
                 <div class="form-grid">
-                    <!-- Event Details -->
                     <div class="form-group full-width">
                         <label>🎤 Program Title</label>
                         <input type="text" id="title" placeholder="e.g. National Seminar on AI Innovation" required>
@@ -428,7 +425,6 @@
                         <input type="text" id="venue" placeholder="e.g. Auditorium Hall C" required>
                     </div>
 
-                    <!-- Attendee Details -->
                     <div class="form-group full-width" style="margin-top: 10px;">
                         <label style="border-bottom: 1px solid #eee; padding-bottom: 5px;">👤 Attendee Information</label>
                     </div>
@@ -444,16 +440,15 @@
                     </div>
 
                     <div class="form-group">
-                        <label>📧 Email ID</label>
-                        <input type="email" id="email" placeholder="john@example.com" required>
+                        <label>📧 Email ID (Optional)</label>
+                        <input type="email" id="email" placeholder="john@example.com">
                     </div>
 
                     <div class="form-group">
-                        <label>🆔 FOLK-ID</label>
-                        <input type="text" id="folkId" placeholder="FLK-99821" required>
+                        <label>🆔 FOLK/YFH-ID (Optional)</label>
+                        <input type="text" id="folkId" placeholder="FLK-99821">
                     </div>
 
-                    <!-- Optional Logo -->
                     <div class="form-group full-width">
                         <label>🖼️ Event Logo / Flyer (Optional)</label>
                         <input type="file" id="logo" accept="image/*">
@@ -464,7 +459,6 @@
             </form>
         </div>
 
-        <!-- Ticket Display Section -->
         <div id="ticket-section">
             
             <div class="ticket-capture-wrapper" id="capture-area">
@@ -486,7 +480,6 @@
                         </div>
                     </div>
 
-                    <!-- Big Middle Ticket Graphic with Text Integration -->
                     <div class="ticket-middle-graphic">
                         <div class="big-pass-badge">
                             <span class="badge-icon">🎟️</span>
@@ -495,14 +488,13 @@
                     </div>
 
                     <div class="ticket-body">
-                        <!-- FIXED Layout: Clean horizontally paired grid system utilizing space -->
                         <div class="attendee-info">
                             <div class="info-block">
                                 <span class="info-label">Attendee Name</span>
                                 <span class="info-value">👤 <span id="display-name">Name</span></span>
                             </div>
                             <div class="info-block">
-                                <span class="info-label">FOLK-ID</span>
+                                <span class="info-label">FOLK/YFH-ID</span>
                                 <span class="info-value">🆔 <span id="display-folkId">ID</span></span>
                             </div>
                             <div class="info-block">
@@ -523,7 +515,6 @@
                 </div>
             </div>
 
-            <!-- Action Buttons -->
             <div class="action-button-container">
                 <div class="share-row">
                     <button onclick="shareAsImage()" class="btn btn-share">📲 Share Details</button>
@@ -553,8 +544,10 @@
             const venue = document.getElementById('venue').value;
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
-            const email = document.getElementById('email').value;
-            const folkId = document.getElementById('folkId').value;
+            
+            // Clean fallback handling for newly introduced optional inputs
+            const email = document.getElementById('email').value.trim() || 'N/A';
+            const folkId = document.getElementById('folkId').value.trim() || 'N/A';
             const logoInput = document.getElementById('logo');
 
             // 2. Set Values in Ticket
@@ -613,8 +606,7 @@
             const venue = document.getElementById('display-venue').textContent;
             const time = document.getElementById('display-time').textContent;
 
-            // FIXED: Cleaned text template to perfectly match real-world sharing actions
-            const whatsappText = `🎟️ *CONFIRMED ENTRY PASS*\n\n📌 *Program:* ${title}\n👤 *Attendee:* ${name}\n🆔 *FOLK-ID:* ${folkId}\n🗓️ *Date:* ${time}\n📍 *Venue:* ${venue}\n\n👉 _Your formal entry ticket graphic has been successfully saved directly to your device downloads folder. Please attach it alongside this message!_`;
+            const whatsappText = `🎟️ *CONFIRMED ENTRY PASS*\n\n📌 *Program:* ${title}\n👤 *Attendee:* ${name}\n🆔 *FOLK/YFH-ID:* ${folkId}\n🗓️ *Date:* ${time}\n📍 *Venue:* ${venue}\n\n👉 _Your formal entry ticket graphic has been successfully saved directly to your device downloads folder. Please attach it alongside this message!_`;
             const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappText)}`;
 
             try {
