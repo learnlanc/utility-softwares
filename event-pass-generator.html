@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Pass Generator</title>
+    <title>Event Pass Generator & Bulk Processor</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
     <style>
         :root {
@@ -17,6 +20,17 @@
             --text-main: #333;
             --text-muted: #64748b;
             --gold: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7);
+            --bulk-accent: #6366f1;
+            --bulk-hover: #4f46e5;
+            --ticket-bg: #0b1224;
+            --ticket-surface: #111b3b;
+            --ticket-panel: #15254f;
+            --ticket-border: rgba(148, 163, 255, 0.16);
+            --ticket-text: #f8fbff;
+            --ticket-muted: #a7b7ff;
+            --ticket-accent: #5b73ff;
+            --ticket-accent-strong: #7c3aed;
+            --ticket-shadow: 0 30px 80px rgba(8, 16, 40, 0.55);
         }
 
         * {
@@ -32,7 +46,7 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Google Sites friendly placement */
+            align-items: flex-start;
             padding: 40px 20px;
         }
 
@@ -42,7 +56,6 @@
             perspective: 1000px;
         }
 
-        /* --- Form Card Styles --- */
         .card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -50,6 +63,24 @@
             padding: 40px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0,0,0,0.05);
             transition: all 0.5s ease;
+            margin-bottom: 25px;
+        }
+
+        /* Bulk Section Styling */
+        .bulk-card {
+            border: 2px dashed #cbd5e1;
+            background: #f8fafc;
+        }
+        .bulk-title {
+            color: var(--bulk-accent) !important;
+        }
+        .btn-bulk {
+            background: var(--bulk-accent);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
+        }
+        .btn-bulk:hover {
+            background: var(--bulk-hover);
+            transform: translateY(-2px);
         }
 
         .header {
@@ -114,6 +145,33 @@
             cursor: pointer;
         }
 
+        .divider {
+            text-align: center;
+            margin: 10px 0 30px 0;
+            position: relative;
+        }
+        .divider::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 1px;
+            background: #e2e8f0;
+            z-index: 1;
+        }
+        .divider span {
+            background: #f1f5f9;
+            padding: 0 15px;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            position: relative;
+            z-index: 2;
+        }
+
         .btn {
             width: 100%;
             padding: 16px;
@@ -124,7 +182,7 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            margin-top: 30px;
+            margin-top: 20px;
             transition: all 0.3s ease;
             box-shadow: 0 10px 20px rgba(74, 144, 226, 0.2);
         }
@@ -134,10 +192,18 @@
             transform: translateY(-2px);
         }
 
-        /* --- Ticket Styles --- */
+        /* --- Pass Layout Canvas --- */
         #ticket-section {
             display: none;
             animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        /* Off-screen canvas architecture used safely during batch loop processing */
+        #bulk-render-vault {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 550px;
         }
 
         .ticket-capture-wrapper {
@@ -148,35 +214,36 @@
         }
 
         .ticket {
-            background: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            background: linear-gradient(180deg, var(--ticket-surface), var(--ticket-bg));
+            border-radius: 24px;
+            box-shadow: var(--ticket-shadow);
             position: relative;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
-        /* Dashed Cutout Effect */
         .ticket::before, .ticket::after {
             content: '';
             position: absolute;
             top: 52%;
-            width: 40px;
-            height: 40px;
-            background: #f1f5f9;
+            width: 44px;
+            height: 44px;
+            background: rgba(91, 115, 255, 0.15);
             border-radius: 50%;
             z-index: 10;
+            filter: blur(0.5px);
         }
 
-        .ticket::before { left: -20px; box-shadow: inset -3px 0 5px rgba(0,0,0,0.02); }
-        .ticket::after { right: -20px; box-shadow: inset 3px 0 5px rgba(0,0,0,0.02); }
+        .ticket::before { left: -22px; box-shadow: inset -3px 0 6px rgba(12,14,40,0.18); }
+        .ticket::after { right: -22px; box-shadow: inset 3px 0 6px rgba(12,14,40,0.18); }
 
         .ticket-header {
             padding: 40px 40px 25px 40px;
-            background: #ffffff;
-            border-bottom: 2px dashed #e2e8f0;
+            background: linear-gradient(135deg, rgba(59,115,255,0.16), rgba(120,86,255,0.08));
+            border-bottom: 1px solid rgba(255,255,255,0.08);
             text-align: center;
             position: relative;
         }
@@ -185,15 +252,15 @@
             position: absolute;
             top: 22px;
             right: -35px;
-            background: var(--gold);
-            color: #000;
-            padding: 5px 40px;
+            background: rgba(91,115,255,0.95);
+            color: #ffffff;
+            padding: 6px 36px;
             font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1.8px;
             transform: rotate(45deg);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 25px rgba(23, 49, 120, 0.35);
         }
 
         .ticket-logo-container {
@@ -203,11 +270,11 @@
         
         .ticket-logo {
             max-height: 70px;
-            border-radius: 10px;
+            border-radius: 14px;
             object-fit: contain;
+            box-shadow: 0 12px 30px rgba(15, 23, 54, 0.35);
         }
 
-        /* Fixed Title Container to guarantee single line layouts */
         .ticket-title-container {
             font-size: 24px;
             font-weight: 800;
@@ -221,11 +288,11 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+            color: var(--ticket-text);
         }
 
-        /* Solid Color fix to resolve html2canvas black box bug */
         .ticket-title {
-            color: #1e293b;
+            color: var(--ticket-text);
         }
 
         .title-emoji {
@@ -237,18 +304,20 @@
         .ticket-meta {
             display: flex;
             justify-content: center;
-            gap: 20px;
-            color: var(--text-muted);
+            flex-wrap: wrap;
+            gap: 16px;
+            color: var(--ticket-muted);
             font-size: 14px;
             font-weight: 500;
-            margin-top: 5px;
+            margin-top: 8px;
         }
 
-        /* Big Middle Ticket Graphic with ADMITS ONE Stamp */
         .ticket-middle-graphic {
             text-align: center;
-            padding: 25px 0 15px 0;
-            background: #fafbfc;
+            padding: 30px 0 20px 0;
+            background: rgba(255,255,255,0.04);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
         .big-pass-badge {
@@ -262,21 +331,21 @@
         .badge-icon {
             font-size: 76px;
             line-height: 1;
-            filter: drop-shadow(0 10px 15px rgba(79, 70, 229, 0.25));
+            text-shadow: 0 18px 40px rgba(59,115,255,0.35);
         }
 
         .badge-text {
-            margin-top: 10px;
+            margin-top: 12px;
             font-size: 11px;
             font-weight: 800;
-            color: #1e293b;
+            color: var(--ticket-text);
             letter-spacing: 4px;
             text-transform: uppercase;
-            border: 2px dashed #cbd5e1;
-            padding: 4px 14px;
-            border-radius: 6px;
-            background: #ffffff;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            border: 2px dashed rgba(255,255,255,0.14);
+            padding: 6px 16px;
+            border-radius: 999px;
+            background: rgba(91,115,255,0.12);
+            box-shadow: 0 6px 18px rgba(15,23,54,0.25);
         }
 
         @keyframes floatAnimation {
@@ -287,31 +356,31 @@
 
         .ticket-body {
             padding: 15px 40px 40px 40px;
-            background: #fafbfc;
+            background: transparent;
         }
 
-        /* FIXED: Changed to a solid, explicit 2-column grid layout utilizing the full right side */
         .attendee-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 24px;
             margin-bottom: 30px;
-            background: #ffffff;
+            background: rgba(255,255,255,0.05);
             padding: 24px;
-            border-radius: 16px;
-            border: 1px solid #f1f5f9;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
         }
 
         .info-block {
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            min-width: 0; /* Prevents text overflow */
+            gap: 6px;
+            min-width: 0;
         }
 
         .info-label {
             font-size: 11px;
-            color: var(--text-muted);
+            color: var(--ticket-muted);
             text-transform: uppercase;
             letter-spacing: 1px;
             font-weight: 500;
@@ -320,7 +389,7 @@
         .info-value {
             font-size: 15px;
             font-weight: 600;
-            color: #1e293b;
+            color: var(--ticket-text);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -329,10 +398,10 @@
         .ticket-footer {
             text-align: center;
             padding-top: 20px;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            color: var(--ticket-muted);
         }
 
-        /* --- Action Button Layout --- */
         .action-button-container {
             display: flex;
             flex-direction: column;
@@ -347,30 +416,26 @@
         }
 
         .btn-share {
-            background: var(--success);
-            box-shadow: 0 6px 15px rgba(46, 204, 113, 0.2);
+            background: linear-gradient(135deg, var(--ticket-accent), var(--ticket-accent-strong));
+            box-shadow: 0 12px 30px rgba(91,115,255,0.25);
             margin-top: 0;
         }
 
-        .btn-share:hover {
-            background: var(--success-hover);
-        }
+        .btn-share:hover { background: linear-gradient(135deg, #4f61ff, #6d44fb); }
 
         .btn-download {
-            background: #ffffff;
-            color: #333;
-            border: 2px solid #e2e8f0;
-            box-shadow: none;
+            background: #101a36;
+            color: #eef2ff;
+            border: 2px solid rgba(255,255,255,0.14);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
             margin-top: 0;
         }
 
-        .btn-download:hover {
-            background: #f8fafc;
-        }
+        .btn-download:hover { background: #16214a; }
 
         .btn-secondary {
             background: transparent;
-            color: var(--text-muted);
+            color: var(--ticket-muted);
             border: none;
             box-shadow: none;
             margin-top: 5px;
@@ -378,8 +443,16 @@
         }
         
         .btn-secondary:hover {
-            color: var(--text-main);
+            color: var(--ticket-text);
             background: transparent;
+        }
+
+        .status-msg {
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
         }
 
         @keyframes fadeIn {
@@ -392,7 +465,6 @@
             .ticket-header { padding: 30px 20px 20px 20px; }
             .ticket-body { padding: 20px 20px 30px 20px; }
             .ticket-title-container { font-size: 18px; }
-            /* Keep columns organized neatly on small devices */
             .attendee-info { gap: 16px; padding: 16px; }
             .info-value { font-size: 13px; }
         }
@@ -402,10 +474,35 @@
 
     <div class="container">
         
+        <div id="bulk-section" class="card bulk-card">
+            <div class="header">
+                <h1 class="bulk-title">📊 Bulk Pass Processor</h1>
+                <p>Upload your workbook and image to process passes in parallel</p>
+            </div>
+            <form id="bulkForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>📈 Select Excel Sheet (.xlsx)</label>
+                        <input type="file" id="excelFile" accept=".xlsx, .xls" required>
+                    </div>
+                    <div class="form-group">
+                        <label>🖼️ Batch Logo / Picture</label>
+                        <input type="file" id="bulkLogo" accept="image/*" required>
+                    </div>
+                </div>
+                <button type="submit" id="bulkSubmitBtn" class="btn btn-bulk">⚡ Process & Download Bulk ZIP</button>
+                <div id="bulkStatus" class="status-msg"></div>
+            </form>
+        </div>
+
+        <div class="divider">
+            <span>OR</span>
+        </div>
+        
         <div id="form-section" class="card">
             <div class="header">
-                <h1>✨ Event Pass Generator</h1>
-                <p>Enter details below to generate a luxury event pass</p>
+                <h1>✨ Single Event Pass Generator</h1>
+                <p>Enter details manually to layout a dedicated luxury entry pass</p>
             </div>
 
             <form id="eventForm">
@@ -440,13 +537,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label>📧 Email ID (Optional)</label>
-                        <input type="email" id="email" placeholder="john@example.com">
-                    </div>
-
-                    <div class="form-group">
-                        <label>🆔 FOLK/YFH-ID (Optional)</label>
-                        <input type="text" id="folkId" placeholder="FLK-99821">
+                        <label>🆔 ATTENDEE ID</label>
+                        <input type="text" id="attendeeId" value="EVENT001" readonly>
                     </div>
 
                     <div class="form-group full-width">
@@ -460,7 +552,6 @@
         </div>
 
         <div id="ticket-section">
-            
             <div class="ticket-capture-wrapper" id="capture-area">
                 <div class="ticket">
                     <div class="admits-one">Admits One</div>
@@ -494,16 +585,12 @@
                                 <span class="info-value">👤 <span id="display-name">Name</span></span>
                             </div>
                             <div class="info-block">
-                                <span class="info-label">FOLK/YFH-ID</span>
-                                <span class="info-value">🆔 <span id="display-folkId">ID</span></span>
+                                <span class="info-label">ATTENDEE ID</span>
+                                <span class="info-value">🆔 <span id="display-attendeeId">EVENT001</span></span>
                             </div>
                             <div class="info-block">
                                 <span class="info-label">Contact</span>
                                 <span class="info-value">📱 <span id="display-phone">Phone</span></span>
-                            </div>
-                            <div class="info-block">
-                                <span class="info-label">Email</span>
-                                <span class="info-value">📧 <span id="display-email">Email</span></span>
                             </div>
                         </div>
                         
@@ -522,18 +609,24 @@
                 </div>
                 <button onclick="resetForm()" class="btn btn-secondary">⬅️ Create Another Pass</button>
             </div>
-            
         </div>
 
     </div>
 
+    <div id="bulk-render-vault"></div>
+
     <script>
+        let globalLogoDataUrl = '';
+
+        function buildSeatId(index) {
+            return 'EVENT' + String(index).padStart(3, '0');
+        }
+
+        // --- SINGLE PASS MANUAL LOGIC ---
         document.getElementById('eventForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            // 1. Get Values
             const title = document.getElementById('title').value;
-            
             const rawTime = document.getElementById('time').value;
             const dateObj = new Date(rawTime);
             const formattedTime = dateObj.toLocaleString('en-US', { 
@@ -544,22 +637,16 @@
             const venue = document.getElementById('venue').value;
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
-            
-            // Clean fallback handling for newly introduced optional inputs
-            const email = document.getElementById('email').value.trim() || 'N/A';
-            const folkId = document.getElementById('folkId').value.trim() || 'N/A';
+            const attendeeId = buildSeatId(1);
             const logoInput = document.getElementById('logo');
 
-            // 2. Set Values in Ticket
             document.getElementById('display-title').textContent = title;
             document.getElementById('display-time').textContent = formattedTime;
             document.getElementById('display-venue').textContent = venue;
             document.getElementById('display-name').textContent = name;
             document.getElementById('display-phone').textContent = phone;
-            document.getElementById('display-email').textContent = email;
-            document.getElementById('display-folkId').textContent = folkId;
+            document.getElementById('display-attendeeId').textContent = attendeeId;
 
-            // 3. Handle Optional Logo
             const logoContainer = document.getElementById('display-logo-container');
             const displayLogo = document.getElementById('display-logo');
             
@@ -575,16 +662,253 @@
                 displayLogo.src = '';
             }
 
-            // 4. Switch Views
             document.getElementById('form-section').style.display = 'none';
+            document.getElementById('bulk-section').style.display = 'none';
+            document.querySelector('.divider').style.display = 'none';
             document.getElementById('ticket-section').style.display = 'block';
         });
 
-        // Generates the canvas with forced desktop width constraints for perfect side-by-side spacing on save
+        // --- BULK PASS PROCESSING CORE ---
+        document.getElementById('bulkForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const excelFile = document.getElementById('excelFile').files[0];
+            const bulkLogoFile = document.getElementById('bulkLogo').files[0];
+            const statusDiv = document.getElementById('bulkStatus');
+            const submitBtn = document.getElementById('bulkSubmitBtn');
+
+            if (!excelFile || !bulkLogoFile) {
+                alert("Please drop both the Excel workbook and structural logo asset configuration files.");
+                return;
+            }
+
+            statusDiv.style.color = "var(--bulk-accent)";
+            statusDiv.style.display = "block";
+            statusDiv.textContent = "🔄 Initializing image stream resources...";
+            submitBtn.disabled = true;
+
+            // Step 1: Read picture asset into string memory
+            const imageReader = new FileReader();
+            imageReader.onload = function(imgEvent) {
+                globalLogoDataUrl = imgEvent.target.result;
+                
+                // Step 2: Read Excel binary stream structures
+                const excelReader = new FileReader();
+                excelReader.onload = function(exEvent) {
+                    try {
+                        const data = new Uint8Array(exEvent.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        // Parse Sheet 1: Program Details
+                        const progSheetName = workbook.SheetNames[0];
+                        const progSheet = workbook.Sheets[progSheetName];
+                        const progData = XLSX.utils.sheet_to_json(progSheet);
+
+                        // Parse Sheet 2: Attendee Details
+                        const attSheetName = workbook.SheetNames[1];
+                        const attSheet = workbook.Sheets[attSheetName];
+                        const attData = XLSX.utils.sheet_to_json(attSheet);
+
+                        if (!progData.length || !attData.length) {
+                            throw new Error("Missing content strings. Check required parameters across Sheets 1 & 2.");
+                        }
+
+                        function formatBulkDate(value) {
+                            if (value instanceof Date && !isNaN(value)) {
+                                return value;
+                            }
+
+                            const raw = String(value).trim();
+                            if (!raw) return null;
+
+                            const monthNames = {
+                                jan: 0, january: 0,
+                                feb: 1, february: 1,
+                                mar: 2, march: 2,
+                                apr: 3, april: 3,
+                                may: 4,
+                                jun: 5, june: 5,
+                                jul: 6, july: 6,
+                                aug: 7, august: 7,
+                                sep: 8, sept: 8, september: 8,
+                                oct: 9, october: 9,
+                                nov: 10, november: 10,
+                                dec: 11, december: 11
+                            };
+
+                            // Excel serial date numeric handling
+                            if (!isNaN(raw) && raw !== '') {
+                                const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+                                const days = Number(raw);
+                                if (!Number.isNaN(days)) {
+                                    const date = new Date(excelEpoch);
+                                    date.setUTCDate(date.getUTCDate() + days);
+                                    return date;
+                                }
+                            }
+
+                            const cleaned = raw.replace(/\s+/g, ' ').trim();
+                            const datePart = cleaned.split(' ')[0];
+                            const separator = datePart.includes('/') ? '/' : (datePart.includes('-') ? '-' : null);
+                            if (!separator) return null;
+
+                            const parts = datePart.split(separator).map(p => p.trim());
+                            if (parts.length !== 3) return null;
+
+                            const day = parseInt(parts[0], 10);
+                            let month = parts[1].toLowerCase();
+                            const year = parseInt(parts[2], 10);
+                            if (Number.isNaN(day) || Number.isNaN(year)) return null;
+
+                            if (!isNaN(month)) {
+                                month = parseInt(month, 10) - 1;
+                            } else {
+                                month = monthNames[month] ?? NaN;
+                            }
+                            if (Number.isNaN(month)) return null;
+
+                            return new Date(year, month, day);
+                        }
+
+                        function prettyDate(date) {
+                            if (!(date instanceof Date) || isNaN(date)) return '';
+                            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                            return `${String(date.getDate()).padStart(2, '0')}-${months[date.getMonth()]}-${date.getFullYear()}`;
+                        }
+
+                        const programInfo = progData[0];
+                        const programName = programInfo['Program Name'] || programInfo['ProgramName'] || 'Event';
+                        const venue = programInfo['Venue'] || 'Main Hall';
+                        
+                        const rawDate = programInfo['Date'] || programInfo['Event Date'] || programInfo['Date of Event'] || '';
+                        const rawTime = programInfo['Time'] || '';
+                        const parsedDate = formatBulkDate(rawDate);
+                        const displayDate = parsedDate ? prettyDate(parsedDate) : String(rawDate).trim();
+                        const displayDateTime = `${displayDate}${rawTime ? ' ' + rawTime : ''}`.trim() || 'See Invitation';
+
+                        statusDiv.textContent = `📦 Loaded event data. Compiling ${attData.length} passes...`;
+                        
+                        // Trigger async batch zip construction sequence
+                        executeBatchGeneration(programName, venue, displayDateTime, attData, statusDiv, submitBtn);
+
+                    } catch (err) {
+                        console.error(err);
+                        statusDiv.style.color = "red";
+                        statusDiv.textContent = `❌ Parse error: ${err.message}`;
+                        submitBtn.disabled = false;
+                    }
+                };
+                excelReader.readAsArrayBuffer(excelFile);
+            };
+            imageReader.readAsDataURL(bulkLogoFile);
+        });
+
+        // Loop array values dynamically into isolation container nodes safely mapping html2canvas operations
+        async function executeBatchGeneration(programName, venue, displayDateTime, attendees, statusDiv, submitBtn) {
+            const vault = document.getElementById('bulk-render-vault');
+            const zip = new JSZip();
+            
+            for (let i = 0; i < attendees.length; i++) {
+                statusDiv.textContent = `⚙️ Processing structural pass render ${i + 1} of ${attendees.length}...`;
+                
+                const person = attendees[i];
+                const name = person['Name'] || `Guest_${i+1}`;
+                const phone = person['Phone'] || 'N/A';
+                const attendeeId = buildSeatId(i + 1);
+
+                // Recreate clean layout blueprint directly in DOM canvas context strings
+                const wrapper = document.createElement('div');
+                wrapper.className = 'ticket-capture-wrapper';
+                wrapper.innerHTML = `
+                    <div class="ticket">
+                        <div class="admits-one">Admits One</div>
+                        <div class="ticket-header">
+                            <div class="ticket-logo-container" style="display: block;">
+                                <img src="${globalLogoDataUrl}" alt="Event Logo" class="ticket-logo">
+                            </div>
+                            <div class="ticket-title-container">
+                                <span class="title-emoji">✨</span>
+                                <span class="ticket-title">${programName}</span>
+                                <span class="title-emoji">🎤</span>
+                            </div>
+                            <div class="ticket-meta">
+                                <span>🗓️ <span>${displayDateTime}</span></span>
+                                <span>📍 <span>${venue}</span></span>
+                            </div>
+                        </div>
+                        <div class="ticket-middle-graphic">
+                            <div class="big-pass-badge">
+                                <span class="badge-icon">🎟️</span>
+                                <div class="badge-text">Admits One</div>
+                            </div>
+                        </div>
+                        <div class="ticket-body">
+                            <div class="attendee-info">
+                                <div class="info-block">
+                                    <span class="info-label">Attendee Name</span>
+                                    <span class="info-value">👤 <span>${name}</span></span>
+                                </div>
+                                <div class="info-block">
+                                    <span class="info-label">ATTENDEE ID</span>
+                                    <span class="info-value">🆔 <span>${attendeeId}</span></span>
+                                </div>
+                                <div class="info-block">
+                                    <span class="info-label">Contact</span>
+                                    <span class="info-value">📱 <span>${phone}</span></span>
+                                </div>
+                            </div>
+                            <div class="ticket-footer">
+                                <p style="font-size: 26px; letter-spacing: 12px;">🎟️ 🪪 🎫</p>
+                                <p style="font-size: 11px; color: #94a3b8; margin-top: 12px; letter-spacing: 0.5px;">Please present this pass at the entrance.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                vault.appendChild(wrapper);
+
+                // Use the exact desktop-optimized canvas scale preferences as individual layout renders
+                const canvas = await html2canvas(wrapper, {
+                    scale: 2.5,
+                    backgroundColor: null,
+                    useCORS: true
+                });
+
+                // Strip data signatures out directly into image binary nodes
+                const imgData = canvas.toDataURL('image/png').split(',')[1];
+                
+                // Format file naming convention strings clearly
+                const safeName = name.replace(/[^a-zA-Z0-9]/g, '_');
+                const safePhone = String(phone).replace(/[^a-zA-Z0-9+]/g, '');
+                
+                zip.file(`${safeName}_${safePhone}.png`, imgData, { base64: true });
+                
+                // Flush temporary DOM rendering elements to maintain fast system operation
+                vault.removeChild(wrapper);
+            }
+
+            statusDiv.textContent = "📦 Packaging files into high-compression folder...";
+            
+            // Build down structural ZIP target archive name configurations matching exactly: "Program_Name_Passes_Date"
+            const cleanProgramTitle = programName.replace(/[^a-zA-Z0-9]/g, '_').replace(/__+/g, '_');
+            const cleanDateString = displayDateTime.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '-');
+            const zipOutputName = `${cleanProgramTitle}_Passes_${cleanDateString}.zip`;
+
+            zip.generateAsync({ type: "blob" }).then(function(content) {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = zipOutputName;
+                link.click();
+
+                statusDiv.style.color = "var(--success)";
+                statusDiv.textContent = `✅ Success! Archive generated: "${zipOutputName}" downloaded.`;
+                submitBtn.disabled = false;
+            });
+        }
+
+        // --- IMAGE CANVAS EXPORT LOGIC (Manual Forms) ---
         async function generateCanvasBlob() {
             const target = document.getElementById('capture-area');
-            
-            // Explicitly set width to 550px to enforce spacious horizontal row layout on download
             const originalWidthStyle = target.style.width;
             target.style.width = '550px';
             
@@ -598,15 +922,14 @@
             return canvas;
         }
 
-        // Action 1: Shares clear details to WhatsApp, referencing the downloaded gallery file
         async function shareAsImage() {
             const title = document.getElementById('display-title').textContent;
             const name = document.getElementById('display-name').textContent;
-            const folkId = document.getElementById('display-folkId').textContent;
+            const attendeeId = document.getElementById('display-attendeeId').textContent;
             const venue = document.getElementById('display-venue').textContent;
             const time = document.getElementById('display-time').textContent;
 
-            const whatsappText = `🎟️ *CONFIRMED ENTRY PASS*\n\n📌 *Program:* ${title}\n👤 *Attendee:* ${name}\n🆔 *FOLK/YFH-ID:* ${folkId}\n🗓️ *Date:* ${time}\n📍 *Venue:* ${venue}\n\n👉 _Your formal entry ticket graphic has been successfully saved directly to your device downloads folder. Please attach it alongside this message!_`;
+            const whatsappText = `🎟️ *CONFIRMED ENTRY PASS*\n\n📌 *Program:* ${title}\n👤 *Attendee:* ${name}\n🆔 *ATTENDEE ID:* ${attendeeId}\n🗓️ *Date:* ${time}\n📍 *Venue:* ${venue}\n\n👉 _Your formal entry ticket graphic has been successfully saved directly to your device downloads folder. Please attach it alongside this message!_`;
             const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappText)}`;
 
             try {
@@ -633,7 +956,6 @@
             }
         }
 
-        // Action 2: Premium Image Downloader 
         async function downloadAsImage() {
             try {
                 const canvas = await generateCanvasBlob();
@@ -659,8 +981,12 @@
 
         function resetForm() {
             document.getElementById('eventForm').reset();
+            document.getElementById('bulkForm').reset();
+            document.getElementById('bulkStatus').style.display = 'none';
             document.getElementById('ticket-section').style.display = 'none';
             document.getElementById('form-section').style.display = 'block';
+            document.getElementById('bulk-section').style.display = 'block';
+            document.querySelector('.divider').style.display = 'block';
         }
     </script>
 </body>
