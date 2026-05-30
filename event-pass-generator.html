@@ -504,8 +504,8 @@
                         <input type="file" id="excelFile" accept=".csv,text/csv" required>
                     </div>
                     <div class="form-group">
-                        <label>🖼️ Batch Logo / Picture</label>
-                        <input type="file" id="bulkLogo" accept="image/*" required>
+                        <label>🖼️ Batch Logo / Picture (Optional)</label>
+                        <input type="file" id="bulkLogo" accept="image/*">
                     </div>
                 </div>
                 <button type="submit" id="bulkSubmitBtn" class="btn btn-bulk">⚡ Process & Download Bulk ZIP</button>
@@ -560,6 +560,8 @@
                             <select id="existingProgram" style="width: 100%; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px; background: #f8fafc; outline: none; cursor: pointer;">
                                 <option value="">Choose an event...</option>
                                 <option value="AOMC" data-name="Art Of Mind Control">Art Of Mind Control (AOMC)</option>
+                                <option value="YFH" data-name="Yoga For Happiness">Yoga For Happiness (YFH)</option>
+                                <option value="FOLK" data-name="FOLK Event">FOLK Event (FOLK)</option>
                             </select>
                         </div>
                         <div class="form-group full-width" style="padding: 12px; background: #f0f4ff; border-radius: 12px; border: 1px solid #e0e7ff;">
@@ -721,17 +723,42 @@
         const existingEvents = {
             'AOMC': {
                 name: 'Art Of Mind Control',
-                venue: 'Main Hall'
+                venue: 'ISKCON Temple, Rajajinagar, Bangalore',
+                weekday: 0,
+                hour: 13,
+                minute: 0,
+                info: 'Upcoming Sunday at 1:00 PM'
+            },
+            'YFH': {
+                name: 'Yoga For Happiness',
+                venue: 'ISKCON Temple, Rajajinagar, Bangalore',
+                weekday: 6,
+                hour: 17,
+                minute: 30,
+                info: 'Upcoming Saturday at 5:30 PM'
+            },
+            'FOLK': {
+                name: 'FOLK Event',
+                venue: 'ISKCON Temple, Rajajinagar, Bangalore',
+                weekday: 0,
+                hour: 16,
+                minute: 0,
+                info: 'Upcoming Sunday at 4:00 PM'
             }
         };
 
-        function getUpcomingSunday() {
+        function getUpcomingWeekdayTime(weekday, hour, minute) {
             const today = new Date();
-            const daysUntilSunday = (7 - today.getDay()) % 7 || 7;
-            const upcomingSunday = new Date(today);
-            upcomingSunday.setDate(upcomingSunday.getDate() + daysUntilSunday);
-            upcomingSunday.setHours(13, 0, 0, 0); // 1 PM
-            return upcomingSunday;
+            const current = new Date(today);
+            current.setHours(hour, minute, 0, 0);
+            let daysUntil = (weekday - today.getDay() + 7) % 7;
+            if (daysUntil === 0 && current <= today) {
+                daysUntil = 7;
+            }
+            const upcoming = new Date(today);
+            upcoming.setDate(today.getDate() + daysUntil);
+            upcoming.setHours(hour, minute, 0, 0);
+            return upcoming;
         }
 
         function formatDateTimeInput(dateObj) {
@@ -787,9 +814,9 @@
                 const event = existingEvents[code];
                 document.getElementById('title').value = event.name;
                 document.getElementById('venue').value = event.venue;
-                const upcomingSunday = getUpcomingSunday();
-                document.getElementById('time').value = formatDateTimeInput(upcomingSunday);
-                const infoText = `${event.name} | ${event.venue} | Upcoming Sunday at 1:00 PM`;
+                const upcomingEvent = getUpcomingWeekdayTime(event.weekday, event.hour, event.minute);
+                document.getElementById('time').value = formatDateTimeInput(upcomingEvent);
+                const infoText = `${event.name} | ${event.venue} | ${event.info}`;
                 document.getElementById('existingEventInfo').textContent = infoText;
             } else {
                 document.getElementById('existingEventInfo').textContent = '';
@@ -855,8 +882,8 @@
             const statusDiv = document.getElementById('bulkStatus');
             const submitBtn = document.getElementById('bulkSubmitBtn');
 
-            if (!excelFile || !bulkLogoFile) {
-                alert("Please provide both the CSV file and a logo image.");
+            if (!excelFile) {
+                alert("Please provide the CSV file.");
                 return;
             }
 
@@ -865,12 +892,7 @@
             statusDiv.textContent = "🔄 Initializing image stream resources...";
             submitBtn.disabled = true;
 
-            // Step 1: Read picture asset into string memory
-            const imageReader = new FileReader();
-            imageReader.onload = function(imgEvent) {
-                globalLogoDataUrl = imgEvent.target.result;
-                
-                // Step 2: Read CSV text and parse rows
+            const loadCsvAndProcess = function() {
                 const csvReader = new FileReader();
                 csvReader.onload = function(csvEvent) {
                     try {
@@ -955,7 +977,18 @@
                 };
                 csvReader.readAsText(excelFile);
             };
-            imageReader.readAsDataURL(bulkLogoFile);
+
+            if (bulkLogoFile) {
+                const imageReader = new FileReader();
+                imageReader.onload = function(imgEvent) {
+                    globalLogoDataUrl = imgEvent.target.result;
+                    loadCsvAndProcess();
+                };
+                imageReader.readAsDataURL(bulkLogoFile);
+            } else {
+                globalLogoDataUrl = '';
+                loadCsvAndProcess();
+            }
         });
 
         // Loop array values dynamically into isolation container nodes safely mapping html2canvas operations
