@@ -82,6 +82,29 @@
             transform: translateY(-2px);
         }
 
+        /* New Download Template Button Style */
+        .btn-template {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: var(--bulk-accent);
+            border: 2px solid var(--bulk-accent);
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-template:hover {
+            background: rgba(99, 102, 241, 0.08);
+            transform: translateY(-1px);
+        }
+
         .header {
             text-align: center;
             margin-bottom: 30px;
@@ -497,6 +520,11 @@
                 <h1 class="bulk-title">📊 Bulk Pass Processor</h1>
                 <p>Upload your workbook and image to process passes in parallel</p>
             </div>
+            
+            <button type="button" class="btn-template" onclick="downloadCsvTemplate()">
+                📥 Download Template CSV File
+            </button>
+
             <form id="bulkForm">
                 <div class="form-grid">
                     <div class="form-group">
@@ -662,7 +690,25 @@
     <script>
         let globalLogoDataUrl = '';
 
-        
+        // Function to process and download template CSV file
+        function downloadCsvTemplate() {
+            const csvContent = "ProgramName,Date,Time,Venue,Attendee,Phone\n" +
+                               "Yoga For Happiness,31/05/26,01:00 PM,\"Your Venue, Address, City\",Person1,12345677890\n" +
+                               ",,,,Person2,12345677890\n" +
+                               ",,,,Pesron3,12345677890";
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", "BulkPass_TEMPLATE.csv");
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
 
         function buildEventId(dateObj) {
             try {
