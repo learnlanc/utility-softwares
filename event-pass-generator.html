@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
     <style>
@@ -131,6 +130,25 @@
             transition: all 0.3s ease;
             background: #f8fafc;
             outline: none;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+            outline: none;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        select:focus {
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
         }
 
         input:focus {
@@ -482,8 +500,8 @@
             <form id="bulkForm">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>📈 Select Excel Sheet (.xlsx)</label>
-                        <input type="file" id="excelFile" accept=".xlsx, .xls" required>
+                        <label>📈 Select CSV File (.csv)</label>
+                        <input type="file" id="excelFile" accept=".csv,text/csv" required>
                     </div>
                     <div class="form-group">
                         <label>🖼️ Batch Logo / Picture</label>
@@ -508,18 +526,45 @@
             <form id="eventForm">
                 <div class="form-grid">
                     <div class="form-group full-width">
-                        <label>🎤 Program Title</label>
-                        <input type="text" id="title" placeholder="e.g. National Seminar on AI Innovation" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>⏰ Date & Time</label>
-                        <input type="datetime-local" id="time" required>
+                        <label style="margin-bottom: 12px; display: block;">📅 Event Type</label>
+                        <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 400; margin: 0;">
+                                <input type="radio" name="eventType" value="new" id="eventTypeNew" checked style="width: 18px; padding: 0; cursor: pointer; background: none;"> New Event
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 400; margin: 0;">
+                                <input type="radio" name="eventType" value="existing" id="eventTypeExisting" style="width: 18px; padding: 0; cursor: pointer; background: none;"> Existing Event
+                            </label>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>📍 Venue</label>
-                        <input type="text" id="venue" placeholder="e.g. Auditorium Hall C" required>
+                    <div id="newEventFields" class="form-grid" style="grid-column: 1 / -1;">
+                        <div class="form-group full-width">
+                            <label>🎤 Program Title</label>
+                            <input type="text" id="title" placeholder="e.g. National Seminar on AI Innovation">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>⏰ Date & Time</label>
+                            <input type="text" id="time" placeholder="YYYY-MM-DD HH:MM" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>📍 Venue</label>
+                            <input type="text" id="venue" placeholder="e.g. Auditorium Hall C">
+                        </div>
+                    </div>
+
+                    <div id="existingEventFields" class="form-grid" style="grid-column: 1 / -1; display: none;">
+                        <div class="form-group full-width">
+                            <label>🎤 Select Program</label>
+                            <select id="existingProgram" style="width: 100%; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px; background: #f8fafc; outline: none; cursor: pointer;">
+                                <option value="">Choose an event...</option>
+                                <option value="AOMC" data-name="Art Of Mind Control">Art Of Mind Control (AOMC)</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width" style="padding: 12px; background: #f0f4ff; border-radius: 12px; border: 1px solid #e0e7ff;">
+                            <p style="font-size: 13px; color: #64748b; margin: 0;">📌 <strong id="existingEventInfo"></strong></p>
+                        </div>
                     </div>
 
                     <div class="form-group full-width" style="margin-top: 10px;">
@@ -536,10 +581,7 @@
                         <input type="tel" id="phone" placeholder="+1 234 567 890" required>
                     </div>
 
-                    <div class="form-group">
-                        <label>🆔 ATTENDEE ID</label>
-                        <input type="text" id="attendeeId" value="EVENT001" readonly>
-                    </div>
+                    
 
                     <div class="form-group full-width">
                         <label>🖼️ Event Logo / Flyer (Optional)</label>
@@ -585,8 +627,8 @@
                                 <span class="info-value">👤 <span id="display-name">Name</span></span>
                             </div>
                             <div class="info-block">
-                                <span class="info-label">ATTENDEE ID</span>
-                                <span class="info-value">🆔 <span id="display-attendeeId">EVENT001</span></span>
+                                <span class="info-label">EventID</span>
+                                <span class="info-value">🆔 <span id="display-attendeeId">AOMC-00000000</span></span>
                             </div>
                             <div class="info-block">
                                 <span class="info-label">Contact</span>
@@ -618,9 +660,141 @@
     <script>
         let globalLogoDataUrl = '';
 
-        function buildSeatId(index) {
-            return 'EVENT' + String(index).padStart(3, '0');
+        
+
+        function buildEventId(dateObj) {
+            try {
+                const d = dateObj instanceof Date ? dateObj : new Date(dateObj);
+                if (!(d instanceof Date) || isNaN(d)) return 'AOMC-unknown';
+                const dd = String(d.getDate()).padStart(2, '0');
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                let yyyy = d.getFullYear();
+                if (yyyy < 100) yyyy += 2000;
+                return `AOMC-${dd}${mm}${yyyy}`;
+            } catch (e) {
+                return 'AOMC-unknown';
+            }
         }
+
+        // CSV / date helpers used by bulk processing
+        function formatBulkDate(value) {
+            if (value instanceof Date && !isNaN(value)) return value;
+            const raw = String(value || '').trim();
+            if (!raw) return null;
+            const monthNames = {
+                jan:0,january:0,feb:1,february:1,mar:2,march:2,apr:3,april:3,may:4,jun:5,june:5,
+                jul:6,july:6,aug:7,august:7,sep:8,sept:8,september:8,oct:9,october:9,nov:10,november:10,dec:11,december:11
+            };
+            // serial numeric (Excel) handling
+            if (!isNaN(raw) && raw !== '') {
+                const days = Number(raw);
+                if (!Number.isNaN(days)) {
+                    const excelEpoch = new Date(Date.UTC(1899,11,30));
+                    const date = new Date(excelEpoch);
+                    date.setUTCDate(date.getUTCDate() + days);
+                    return date;
+                }
+            }
+            const cleaned = raw.replace(/\s+/g,' ').trim();
+            const datePart = cleaned.split(' ')[0];
+            const sep = datePart.includes('/') ? '/' : (datePart.includes('-') ? '-' : null);
+            if (!sep) return null;
+            const parts = datePart.split(sep).map(p=>p.trim());
+            if (parts.length !== 3) return null;
+            const day = parseInt(parts[0],10);
+            let month = parts[1].toLowerCase();
+            let year = parseInt(parts[2],10);
+            if (year < 100) year += 2000;
+            if (Number.isNaN(day) || Number.isNaN(year)) return null;
+            if (!isNaN(month)) month = parseInt(month,10)-1; else month = monthNames[month] ?? NaN;
+            if (Number.isNaN(month)) return null;
+            return new Date(year, month, day);
+        }
+
+        function prettyDate(date) {
+            if (!(date instanceof Date) || isNaN(date)) return '';
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            return `${String(date.getDate()).padStart(2,'0')}-${months[date.getMonth()]}-${date.getFullYear()}`;
+        }
+
+        // --- EXISTING EVENTS DATABASE ---
+        const existingEvents = {
+            'AOMC': {
+                name: 'Art Of Mind Control',
+                venue: 'Main Hall'
+            }
+        };
+
+        function getUpcomingSunday() {
+            const today = new Date();
+            const daysUntilSunday = (7 - today.getDay()) % 7 || 7;
+            const upcomingSunday = new Date(today);
+            upcomingSunday.setDate(upcomingSunday.getDate() + daysUntilSunday);
+            upcomingSunday.setHours(13, 0, 0, 0); // 1 PM
+            return upcomingSunday;
+        }
+
+        function formatDateTimeInput(dateObj) {
+            if (!(dateObj instanceof Date) || isNaN(dateObj)) return '';
+            const yyyy = dateObj.getFullYear();
+            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const dd = String(dateObj.getDate()).padStart(2, '0');
+            const hh = String(dateObj.getHours()).padStart(2, '0');
+            const min = String(dateObj.getMinutes()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+        }
+
+        function parseDateTimeInput(rawValue) {
+            if (!rawValue) return null;
+            const cleaned = String(rawValue).trim();
+            const parsedDate = new Date(cleaned);
+            if (!Number.isNaN(parsedDate)) return parsedDate;
+            const regex = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})$/;
+            const match = cleaned.match(regex);
+            if (match) {
+                const year = Number(match[1]);
+                const month = Number(match[2]) - 1;
+                const day = Number(match[3]);
+                const hour = Number(match[4]);
+                const minute = Number(match[5]);
+                return new Date(year, month, day, hour, minute);
+            }
+            return null;
+        }
+
+        // Event type selection handler
+        document.querySelectorAll('input[name="eventType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const isNew = this.value === 'new';
+                document.getElementById('newEventFields').style.display = isNew ? 'grid' : 'none';
+                document.getElementById('existingEventFields').style.display = isNew ? 'none' : 'grid';
+                
+                if (!isNew) {
+                    document.getElementById('title').removeAttribute('required');
+                    document.getElementById('time').removeAttribute('required');
+                    document.getElementById('venue').removeAttribute('required');
+                } else {
+                    document.getElementById('title').setAttribute('required', 'required');
+                    document.getElementById('time').setAttribute('required', 'required');
+                    document.getElementById('venue').setAttribute('required', 'required');
+                }
+            });
+        });
+
+        document.getElementById('existingProgram').addEventListener('change', function() {
+            const code = this.value;
+            if (code && existingEvents[code]) {
+                const event = existingEvents[code];
+                document.getElementById('title').value = event.name;
+                document.getElementById('venue').value = event.venue;
+                const upcomingSunday = getUpcomingSunday();
+                document.getElementById('time').value = formatDateTimeInput(upcomingSunday);
+                const infoText = `${event.name} | ${event.venue} | Upcoming Sunday at 1:00 PM`;
+                document.getElementById('existingEventInfo').textContent = infoText;
+            } else {
+                document.getElementById('existingEventInfo').textContent = '';
+            }
+        });
 
         // --- SINGLE PASS MANUAL LOGIC ---
         document.getElementById('eventForm').addEventListener('submit', function(e) {
@@ -628,7 +802,11 @@
 
             const title = document.getElementById('title').value;
             const rawTime = document.getElementById('time').value;
-            const dateObj = new Date(rawTime);
+            const dateObj = parseDateTimeInput(rawTime);
+            if (!dateObj || isNaN(dateObj)) {
+                alert('Please enter a valid date and time in YYYY-MM-DD HH:MM format.');
+                return;
+            }
             const formattedTime = dateObj.toLocaleString('en-US', { 
                 weekday: 'short', month: 'short', day: 'numeric', 
                 hour: '2-digit', minute: '2-digit' 
@@ -637,7 +815,7 @@
             const venue = document.getElementById('venue').value;
             const name = document.getElementById('name').value;
             const phone = document.getElementById('phone').value;
-            const attendeeId = buildSeatId(1);
+            const attendeeId = buildEventId(dateObj);
             const logoInput = document.getElementById('logo');
 
             document.getElementById('display-title').textContent = title;
@@ -678,7 +856,7 @@
             const submitBtn = document.getElementById('bulkSubmitBtn');
 
             if (!excelFile || !bulkLogoFile) {
-                alert("Please drop both the Excel workbook and structural logo asset configuration files.");
+                alert("Please provide both the CSV file and a logo image.");
                 return;
             }
 
@@ -692,105 +870,82 @@
             imageReader.onload = function(imgEvent) {
                 globalLogoDataUrl = imgEvent.target.result;
                 
-                // Step 2: Read Excel binary stream structures
-                const excelReader = new FileReader();
-                excelReader.onload = function(exEvent) {
+                // Step 2: Read CSV text and parse rows
+                const csvReader = new FileReader();
+                csvReader.onload = function(csvEvent) {
                     try {
-                        const data = new Uint8Array(exEvent.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        
-                        // Parse Sheet 1: Program Details
-                        const progSheetName = workbook.SheetNames[0];
-                        const progSheet = workbook.Sheets[progSheetName];
-                        const progData = XLSX.utils.sheet_to_json(progSheet);
+                        const rawText = String(csvEvent.target.result || '');
+                        const normalized = rawText.replace(/\r\n/g, '\n').replace(/\r/g,'\n');
 
-                        // Parse Sheet 2: Attendee Details
-                        const attSheetName = workbook.SheetNames[1];
-                        const attSheet = workbook.Sheets[attSheetName];
-                        const attData = XLSX.utils.sheet_to_json(attSheet);
-
-                        if (!progData.length || !attData.length) {
-                            throw new Error("Missing content strings. Check required parameters across Sheets 1 & 2.");
-                        }
-
-                        function formatBulkDate(value) {
-                            if (value instanceof Date && !isNaN(value)) {
-                                return value;
-                            }
-
-                            const raw = String(value).trim();
-                            if (!raw) return null;
-
-                            const monthNames = {
-                                jan: 0, january: 0,
-                                feb: 1, february: 1,
-                                mar: 2, march: 2,
-                                apr: 3, april: 3,
-                                may: 4,
-                                jun: 5, june: 5,
-                                jul: 6, july: 6,
-                                aug: 7, august: 7,
-                                sep: 8, sept: 8, september: 8,
-                                oct: 9, october: 9,
-                                nov: 10, november: 10,
-                                dec: 11, december: 11
-                            };
-
-                            // Excel serial date numeric handling
-                            if (!isNaN(raw) && raw !== '') {
-                                const excelEpoch = new Date(Date.UTC(1899, 11, 30));
-                                const days = Number(raw);
-                                if (!Number.isNaN(days)) {
-                                    const date = new Date(excelEpoch);
-                                    date.setUTCDate(date.getUTCDate() + days);
-                                    return date;
+                        function parseCSVToRows(text) {
+                            const rows = [];
+                            let cur = '';
+                            let row = [];
+                            let inQuotes = false;
+                            for (let i = 0; i < text.length; i++) {
+                                const ch = text[i];
+                                if (ch === '"') {
+                                    if (inQuotes && text[i+1] === '"') { cur += '"'; i++; }
+                                    else inQuotes = !inQuotes;
+                                } else if (ch === ',' && !inQuotes) {
+                                    row.push(cur); cur = '';
+                                } else if (ch === '\n' && !inQuotes) {
+                                    row.push(cur); cur = ''; rows.push(row); row = [];
+                                } else {
+                                    cur += ch;
                                 }
                             }
-
-                            const cleaned = raw.replace(/\s+/g, ' ').trim();
-                            const datePart = cleaned.split(' ')[0];
-                            const separator = datePart.includes('/') ? '/' : (datePart.includes('-') ? '-' : null);
-                            if (!separator) return null;
-
-                            const parts = datePart.split(separator).map(p => p.trim());
-                            if (parts.length !== 3) return null;
-
-                            const day = parseInt(parts[0], 10);
-                            let month = parts[1].toLowerCase();
-                            const year = parseInt(parts[2], 10);
-                            if (Number.isNaN(day) || Number.isNaN(year)) return null;
-
-                            if (!isNaN(month)) {
-                                month = parseInt(month, 10) - 1;
-                            } else {
-                                month = monthNames[month] ?? NaN;
-                            }
-                            if (Number.isNaN(month)) return null;
-
-                            return new Date(year, month, day);
+                            if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+                            return rows;
                         }
 
-                        function prettyDate(date) {
-                            if (!(date instanceof Date) || isNaN(date)) return '';
-                            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-                            return `${String(date.getDate()).padStart(2, '0')}-${months[date.getMonth()]}-${date.getFullYear()}`;
-                        }
+                        const allRows = parseCSVToRows(normalized).filter(r => r.length > 0);
+                        if (!allRows.length) throw new Error('CSV appears empty');
+                        const headers = allRows[0].map(h => String(h || '').trim());
+                        const dataRows = allRows.slice(1).filter(r => r.some(c => String(c || '').trim() !== ''));
+                        const objects = dataRows.map(r => {
+                            const o = {};
+                            headers.forEach((h, idx) => { o[h] = r[idx] === undefined ? '' : r[idx]; });
+                            return o;
+                        });
 
-                        const programInfo = progData[0];
-                        const programName = programInfo['Program Name'] || programInfo['ProgramName'] || 'Event';
-                        const venue = programInfo['Venue'] || 'Main Hall';
-                        
-                        const rawDate = programInfo['Date'] || programInfo['Event Date'] || programInfo['Date of Event'] || '';
-                        const rawTime = programInfo['Time'] || '';
+                        const programInfo = objects[0] || {};
+                        const programName = programInfo['ProgramName'] || programInfo['Program Name'] || programInfo['Program'] || 'Event';
+                        const venue = programInfo['Venue'] || programInfo['Location'] || 'Main Hall';
+                        const rawDate = programInfo['Date'] || '';
+                        const rawTime = programInfo['Time'] || programInfo['StartTime'] || '';
                         const parsedDate = formatBulkDate(rawDate);
-                        const displayDate = parsedDate ? prettyDate(parsedDate) : String(rawDate).trim();
-                        const displayDateTime = `${displayDate}${rawTime ? ' ' + rawTime : ''}`.trim() || 'See Invitation';
+                        let displayDateTime = 'See Invitation';
+                        if (parsedDate) {
+                            const day = parsedDate.getDate();
+                            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                            const month = monthNames[parsedDate.getMonth()];
+                            const year = parsedDate.getFullYear();
+                            const ordinalSuffix = (n) => {
+                                if (n % 100 >= 11 && n % 100 <= 13) return 'th';
+                                switch (n % 10) {
+                                    case 1: return 'st';
+                                    case 2: return 'nd';
+                                    case 3: return 'rd';
+                                    default: return 'th';
+                                }
+                            };
+                            const dateStr = `${day}${ordinalSuffix(day)} ${month}, ${year}`;
+                            const timeStr = String(rawTime).trim();
+                            displayDateTime = timeStr ? `${dateStr} ${timeStr}` : dateStr;
+                        }
 
-                        statusDiv.textContent = `📦 Loaded event data. Compiling ${attData.length} passes...`;
-                        
-                        // Trigger async batch zip construction sequence
-                        executeBatchGeneration(programName, venue, displayDateTime, attData, statusDiv, submitBtn);
+                        const attendees = objects.map(r => ({
+                            Name: r['Attendee'] || r['Attendee Name'] || r['Name'] || '',
+                            Phone: r['Phone'] || r['Contact'] || ''
+                        })).filter(a => a.Name && String(a.Name).trim() !== '');
 
+                        if (!attendees.length) throw new Error('No attendee rows found in CSV');
+
+                        const eventId = buildEventId(parsedDate || new Date());
+                        statusDiv.textContent = `📦 Loaded event data. Compiling ${attendees.length} passes...`;
+
+                        executeBatchGeneration(programName, venue, displayDateTime, attendees, statusDiv, submitBtn, eventId);
                     } catch (err) {
                         console.error(err);
                         statusDiv.style.color = "red";
@@ -798,93 +953,75 @@
                         submitBtn.disabled = false;
                     }
                 };
-                excelReader.readAsArrayBuffer(excelFile);
+                csvReader.readAsText(excelFile);
             };
             imageReader.readAsDataURL(bulkLogoFile);
         });
 
         // Loop array values dynamically into isolation container nodes safely mapping html2canvas operations
-        async function executeBatchGeneration(programName, venue, displayDateTime, attendees, statusDiv, submitBtn) {
+        async function executeBatchGeneration(programName, venue, displayDateTime, attendees, statusDiv, submitBtn, eventId) {
             const vault = document.getElementById('bulk-render-vault');
             const zip = new JSZip();
             
             for (let i = 0; i < attendees.length; i++) {
                 statusDiv.textContent = `⚙️ Processing structural pass render ${i + 1} of ${attendees.length}...`;
-                
+
                 const person = attendees[i];
                 const name = person['Name'] || `Guest_${i+1}`;
                 const phone = person['Phone'] || 'N/A';
-                const attendeeId = buildSeatId(i + 1);
+                const attendeeId = eventId;
 
-                // Recreate clean layout blueprint directly in DOM canvas context strings
-                const wrapper = document.createElement('div');
-                wrapper.className = 'ticket-capture-wrapper';
-                wrapper.innerHTML = `
-                    <div class="ticket">
-                        <div class="admits-one">Admits One</div>
-                        <div class="ticket-header">
-                            <div class="ticket-logo-container" style="display: block;">
-                                <img src="${globalLogoDataUrl}" alt="Event Logo" class="ticket-logo">
-                            </div>
-                            <div class="ticket-title-container">
-                                <span class="title-emoji">✨</span>
-                                <span class="ticket-title">${programName}</span>
-                                <span class="title-emoji">🎤</span>
-                            </div>
-                            <div class="ticket-meta">
-                                <span>🗓️ <span>${displayDateTime}</span></span>
-                                <span>📍 <span>${venue}</span></span>
-                            </div>
-                        </div>
-                        <div class="ticket-middle-graphic">
-                            <div class="big-pass-badge">
-                                <span class="badge-icon">🎟️</span>
-                                <div class="badge-text">Admits One</div>
-                            </div>
-                        </div>
-                        <div class="ticket-body">
-                            <div class="attendee-info">
-                                <div class="info-block">
-                                    <span class="info-label">Attendee Name</span>
-                                    <span class="info-value">👤 <span>${name}</span></span>
-                                </div>
-                                <div class="info-block">
-                                    <span class="info-label">ATTENDEE ID</span>
-                                    <span class="info-value">🆔 <span>${attendeeId}</span></span>
-                                </div>
-                                <div class="info-block">
-                                    <span class="info-label">Contact</span>
-                                    <span class="info-value">📱 <span>${phone}</span></span>
-                                </div>
-                            </div>
-                            <div class="ticket-footer">
-                                <p style="font-size: 26px; letter-spacing: 12px;">🎟️ 🪪 🎫</p>
-                                <p style="font-size: 11px; color: #94a3b8; margin-top: 12px; letter-spacing: 0.5px;">Please present this pass at the entrance.</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                // Clone the exact ticket DOM used by individual generation so visuals match precisely
+                const templateTicket = document.querySelector('#capture-area .ticket');
+                if (!templateTicket) {
+                    throw new Error('Ticket template not found in DOM');
+                }
 
-                vault.appendChild(wrapper);
+                const clone = templateTicket.cloneNode(true);
 
-                // Use the exact desktop-optimized canvas scale preferences as individual layout renders
-                const canvas = await html2canvas(wrapper, {
+                // populate cloned fields (query within clone subtree)
+                const q = (sel) => clone.querySelector(sel);
+                const setIf = (sel, value) => { const el = q(sel); if (el) el.textContent = value; };
+
+                // Titles and meta
+                setIf('#display-title', programName);
+                setIf('#display-time', displayDateTime);
+                setIf('#display-venue', venue);
+
+                // Attendee info (ATTENDEE ID is fixed per event)
+                setIf('#display-name', name);
+                setIf('#display-attendeeId', attendeeId);
+                setIf('#display-phone', phone);
+
+                // Logo handling inside clone
+                const logoContainerClone = q('#display-logo-container');
+                const logoImgClone = q('#display-logo');
+                if (logoImgClone) {
+                    if (globalLogoDataUrl) {
+                        logoImgClone.src = globalLogoDataUrl;
+                        if (logoContainerClone && logoContainerClone.style) logoContainerClone.style.display = 'block';
+                    } else {
+                        logoImgClone.src = '';
+                        if (logoContainerClone && logoContainerClone.style) logoContainerClone.style.display = 'none';
+                    }
+                }
+
+                vault.appendChild(clone);
+
+                const canvas = await html2canvas(clone, {
                     scale: 2.5,
                     backgroundColor: null,
                     useCORS: true
                 });
 
-                // Strip data signatures out directly into image binary nodes
                 const imgData = canvas.toDataURL('image/png').split(',')[1];
-                
-                // Format file naming convention strings clearly
+
                 const safeName = name.replace(/[^a-zA-Z0-9]/g, '_');
                 const safePhone = String(phone).replace(/[^a-zA-Z0-9+]/g, '');
-                
+
                 zip.file(`${safeName}_${safePhone}.png`, imgData, { base64: true });
-                
-                // Flush temporary DOM rendering elements to maintain fast system operation
-                vault.removeChild(wrapper);
+
+                vault.removeChild(clone);
             }
 
             statusDiv.textContent = "📦 Packaging files into high-compression folder...";
@@ -892,7 +1029,8 @@
             // Build down structural ZIP target archive name configurations matching exactly: "Program_Name_Passes_Date"
             const cleanProgramTitle = programName.replace(/[^a-zA-Z0-9]/g, '_').replace(/__+/g, '_');
             const cleanDateString = displayDateTime.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '-');
-            const zipOutputName = `${cleanProgramTitle}_Passes_${cleanDateString}.zip`;
+            const zipSuffix = eventId ? eventId.replace(/[^a-zA-Z0-9-]/g, '') : cleanDateString;
+            const zipOutputName = `${cleanProgramTitle}_Passes_${zipSuffix}.zip`;
 
             zip.generateAsync({ type: "blob" }).then(function(content) {
                 const link = document.createElement('a');
@@ -929,7 +1067,7 @@
             const venue = document.getElementById('display-venue').textContent;
             const time = document.getElementById('display-time').textContent;
 
-            const whatsappText = `🎟️ *CONFIRMED ENTRY PASS*\n\n📌 *Program:* ${title}\n👤 *Attendee:* ${name}\n🆔 *ATTENDEE ID:* ${attendeeId}\n🗓️ *Date:* ${time}\n📍 *Venue:* ${venue}\n\n👉 _Your formal entry ticket graphic has been successfully saved directly to your device downloads folder. Please attach it alongside this message!_`;
+            const whatsappText = `🎟️ *CONFIRMED ENTRY PASS*\n\n📌 *Program:* ${title}\n👤 *Attendee:* ${name}\n🆔 *EventID:* ${attendeeId}\n🗓️ *Date:* ${time}\n📍 *Venue:* ${venue}\n\n👉 _Your formal entry ticket graphic has been successfully saved directly to your device downloads folder. Please attach it alongside this message!_`;
             const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappText)}`;
 
             try {
